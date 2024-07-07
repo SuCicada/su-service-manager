@@ -52,6 +52,32 @@ export default [
     component: './TableList',
   },
   {
+    path: '/github',
+    name: 'github',
+    icon: 'crown',
+    // access: 'canAdmin',
+    routes: [
+      {
+        name: 'github',
+        icon: 'table',
+        path: '/github/github',
+        component: './github/github',
+      },
+      {
+        name: 'webhooks',
+        icon: 'table',
+        path: '/github/webhooks',
+        component: './github/webhooks',
+      },
+    ],
+  },
+  {
+    name: 'test',
+    icon: 'table',
+    path: '/test',
+    component: './test',
+  },
+  {
     path: '/',
     redirect: '/welcome',
   },

@@ -191,10 +191,11 @@
           </div>
         </div>
         <div class="loading-title">
-          正在加载资源
+          リソースを読み込んでいます
         </div>
         <div class="loading-sub-title">
-          初次加载资源可能需要较多时间 请耐心等待
+          初回のリソース読み込みには時間がかかる場合があります<br/>
+          しばらくお待ちください
         </div>
       </div>
     `;
