@@ -19,6 +19,7 @@ import type { FormValueType } from './components/UpdateForm';
 import UpdateForm from './components/UpdateForm';
 import CreateForm from './components/CreateForm';
 import { deleteWebhook, getWebhooks, updateWebhook, Webhook } from '@/pages/github/webhooks/api';
+import { syncFromGithubWebhooks } from '@/pages/github/webhooks/service';
 
 /**
  * @en-US Add node
@@ -70,13 +71,18 @@ const handleUpdate = async (fields: FormValueType) => {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: API.RuleListItem[]) => {
+const handleRemove = async (selectedRows: Webhook[]) => {
   const hide = message.loading('正在删除');
   if (!selectedRows) return true;
   try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
-    });
+    for (let row of selectedRows) {
+      if (row.id) {
+        await deleteWebhook(row.id);
+      }
+    }
+    // await removeRule({
+    //   key: selectedRows.map((row) => row.key),
+    // });
     hide();
     message.success('Deleted successfully and will refresh soon');
     return true;
@@ -102,8 +108,9 @@ const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<API.RuleListItem[]>([]);
+  // const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
+  const [selectedRowsState, setSelectedRows] = useState<Webhook[]>([]);
+  const [loading, setLoading] = useState(false);
 
   /**
    * @en-US International configuration
@@ -123,19 +130,22 @@ const TableList: React.FC = () => {
       title: 'url',
       key: 'url',
       dataIndex: 'url',
+      sorter: (a, b) => a.url.length - b.url.length,
       valueType: 'text',
-      onCell: (record, rowIndex) => {
-        console.log('onCell', record, rowIndex);
-        return {};
-      },
-      onCellClick: (record, e) => {
-        console.log('onCellClick', record, e);
-      },
+      // onCell: (record, rowIndex) => {
+      //   console.log('onCell', record, rowIndex);
+      //   return {};
+      // },
+      // onCellClick: (record, e) => {
+      //   console.log('onCellClick', record, e);
+      // },
     },
     {
       title: '操作',
       valueType: 'option',
       key: 'option',
+      width: 120,
+      fixed: 'right',
       render: (text, record, _, action) => [
         <a
           key="editable"
@@ -160,10 +170,26 @@ const TableList: React.FC = () => {
       ],
     },
   ];
+  const clickSyncFromGithubWebhooks = async () => {
+    setLoading(true);
+    try {
+      // console.log('sleep start');
+      await syncFromGithubWebhooks();
+      // const sleep = util.promisify(setTimeout);
+      // await new Promise(resolve => {
+      //   setTimeout(resolve, 1000)
+      // });
+      // console.log('sleep over');
+      actionRef.current?.reloadAndRest?.();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PageContainer>
       <EditableProTable<Webhook, API.PageParams>
+        loading={loading}
         headerTitle={intl.formatMessage({
           id: 'pages.searchTable.title',
           defaultMessage: 'Enquiry form',
@@ -205,7 +231,12 @@ const TableList: React.FC = () => {
         onChange={(value) => {
           console.log('onChange', value);
         }}
-        toolBarRender={() => [<CreateForm key="create" reload={actionRef.current?.reload} />]}
+        toolBarRender={() => [
+          <Button key="syncFromGithubWebhooks" onClick={clickSyncFromGithubWebhooks}>
+            Sync From Github
+          </Button>,
+          <CreateForm key="create" reload={actionRef.current?.reload} />,
+        ]}
         options={{
           reload: true,
         }}
@@ -242,7 +273,7 @@ const TableList: React.FC = () => {
                   id="pages.searchTable.totalServiceCalls"
                   defaultMessage="Total number of service calls"
                 />{' '}
-                {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}
+                {/*{selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}*/}
                 <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
               </span>
             </div>

@@ -14,11 +14,11 @@ import {
 } from '@ant-design/pro-components';
 import { FormattedMessage, request, useIntl } from '@umijs/max';
 import { Button, Drawer, Input, Popconfirm, message } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { FormValueType } from './components/UpdateForm';
 import UpdateForm from './components/UpdateForm';
-import CreateForm from './components/CreateForm';
-import { getAllRepoInfo, GitHubRepoType } from './api';
+import { getPageRepoInfo, GitHubRepoType, updateRepoWebhook } from './api';
+import { getWebhooks, updateWebhook, Webhook } from '@/pages/github/webhooks/api';
 
 /**
  * @en-US Add node
@@ -104,13 +104,19 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
   const [selectedRowsState, setSelectedRows] = useState<API.RuleListItem[]>([]);
-
+  // const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
 
+  // useEffect(() => {
+  //   getWebhooks().then(res => {
+  //     setWebhooks(res)
+  //   })
+  // }, [])
+  //
   const columns: ProColumns<GitHubRepoType>[] = [
     {
       title: 'repo',
@@ -142,6 +148,28 @@ const TableList: React.FC = () => {
       dataIndex: 'owner',
       valueType: 'text',
       editable: false,
+    },
+    {
+      title: 'webhooks_name',
+      key: 'webhooks_name',
+      dataIndex: 'webhooks_name',
+      // disable: true,
+      // filters: true,
+      // onFilter: true,
+      // ellipsis: true,
+      valueType: 'select',
+      fieldProps: {
+        mode: 'multiple',
+        // optionFilterProp: 'label',
+        defaultValue: ['asa'],
+      },
+      request: async () => {
+        const webhooks = await getWebhooks();
+        return webhooks.map((webhook) => ({
+          label: webhook.name,
+          value: webhook.url,
+        }));
+      },
     },
     // {
     //   title: "html_url",
@@ -219,7 +247,12 @@ const TableList: React.FC = () => {
           onSave: async (key, row) => {
             console.log('onSave', key, row);
             // await waitTime(2000);
-            // await updateWebhook({id: key, ...row} as Webhook)
+            await updateRepoWebhook({
+              owner: row.owner,
+              repo: row.repo,
+              webhooks: row.webhooks_name,
+              events: ['push', 'workflow_run'],
+            });
             actionRef.current?.reloadAndRest?.();
           },
           onChange: (editableKeys, editableRows) => {
@@ -240,21 +273,32 @@ const TableList: React.FC = () => {
         onChange={(value) => {
           console.log('onChange', value);
         }}
-        toolBarRender={() => [<CreateForm key="create" reload={actionRef.current?.reload} />]}
+        // toolBarRender={() => [<CreateForm key="create" reload={actionRef.current?.reload}/>]}
         options={{
           reload: true,
         }}
         request={async (params, sort, filter) => {
           console.log('params', params);
-          let res = await getAllRepoInfo({
+          let res = await getPageRepoInfo({
             page: params.current ?? 0,
             per_page: params.pageSize ?? 0,
           });
-          const { data } = res;
-          console.log('data', data);
+          const { count, repos } = res.data;
+          const webhooks = await getWebhooks();
+          console.log('count', count);
+          console.log('webhooks', webhooks);
+          const webhooksMap = webhooks.reduce((acc, cur) => {
+            acc[cur.url] = cur.name;
+            return acc;
+          }, {} as { [key: string]: string });
+          repos.forEach((item) => {
+            item.webhooks_name = item.webhooks.map((webhook) => webhooksMap[webhook]);
+            // console.log(item)
+          });
+          console.log('data', repos);
           // data = data.map((item: object) =>  {return {key:item.id, ...item }})
           return {
-            data: data,
+            data: repos,
             success: true,
           };
         }}
