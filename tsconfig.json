@@ -9,6 +9,7 @@
     "sourceMap": true,
     "baseUrl": "./",
     "skipLibCheck": true,
+    "allowUnusedLabels": true,
     "experimentalDecorators": true,
     "strict": true,
     "resolveJsonModule": true,
