@@ -13,7 +13,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, request, useIntl } from '@umijs/max';
-import { Button, Drawer, Input, Popconfirm, message } from 'antd';
+import { Button, Drawer, Input, Popconfirm, message, Select } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import type { FormValueType } from './components/UpdateForm';
 import UpdateForm from './components/UpdateForm';
@@ -103,20 +103,22 @@ const TableList: React.FC = () => {
 
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<API.RuleListItem[]>([]);
-  // const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [selectedRowsState, setSelectedRows] = useState<GitHubRepoType[]>([]);
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
 
-  // useEffect(() => {
-  //   getWebhooks().then(res => {
-  //     setWebhooks(res)
-  //   })
-  // }, [])
+  useEffect(() => {
+    getWebhooks().then((res) => {
+      setWebhooks(res);
+    });
+  }, []);
   //
+  // const webhooks = await getWebhooks();
+
   const columns: ProColumns<GitHubRepoType>[] = [
     {
       title: 'repo',
@@ -164,7 +166,7 @@ const TableList: React.FC = () => {
         defaultValue: ['asa'],
       },
       request: async () => {
-        const webhooks = await getWebhooks();
+        // const webhooks = await getWebhooks();
         return webhooks.map((webhook) => ({
           label: webhook.name,
           value: webhook.url,
@@ -223,6 +225,24 @@ const TableList: React.FC = () => {
     },
   ];
 
+  const [batchUpdatedWebhooks, setBatchUpdatedWebhooks] = useState<string[]>([]);
+  const doBatchUpdate = async (updateRows: GitHubRepoType[]) => {
+    const hide = message.loading('updating');
+    console.log('batchUpdate', updateRows);
+    // const newWebhooks = batchUpdatedWebhooks.map(webhook => webhook.url);
+    const promises = updateRows.map((row) => {
+      return updateRepoWebhook({
+        owner: row.owner,
+        repo: row.repo,
+        webhooks: batchUpdatedWebhooks,
+        events: ['push', 'workflow_run'],
+      });
+    });
+    await Promise.all(promises);
+    hide();
+    actionRef.current?.reloadAndRest?.();
+  };
+
   return (
     <PageContainer>
       <EditableProTable<GitHubRepoType, API.PageParams>
@@ -233,6 +253,41 @@ const TableList: React.FC = () => {
         actionRef={actionRef}
         search={false}
         rowKey="repo"
+        toolBarRender={() =>
+          selectedRowsState?.length > 0
+            ? [
+                <Select
+                  key="select"
+                  mode="multiple"
+                  allowClear
+                  style={{ width: 400 }}
+                  placeholder="Select an option"
+                  options={webhooks.map((webhook) => ({
+                    label: webhook.name,
+                    value: webhook.url,
+                  }))}
+                  onChange={(value, option) => {
+                    console.log('Selected', value, option);
+                    // const newWebhooks = (option as OptionType[]).map((item) => ({
+                    //   name: item.label,
+                    //   url: item.value,
+                    // }))
+                    setBatchUpdatedWebhooks(value);
+                  }}
+                ></Select>,
+
+                <Button
+                  type="primary"
+                  key="primary"
+                  onClick={async () => {
+                    await doBatchUpdate(selectedRowsState);
+                  }}
+                >
+                  Batch Update
+                </Button>,
+              ]
+            : []
+        }
         // search={{
         //   labelWidth: 120,
         // }}
@@ -247,10 +302,18 @@ const TableList: React.FC = () => {
           onSave: async (key, row) => {
             console.log('onSave', key, row);
             // await waitTime(2000);
+            const newWebhooks = row.webhooks_name.map((webhook) => {
+              const wh = webhooks.find((item) => item.name === webhook);
+              if (wh) {
+                return wh.url;
+              }
+              return webhook;
+            });
+
             await updateRepoWebhook({
               owner: row.owner,
               repo: row.repo,
-              webhooks: row.webhooks_name,
+              webhooks: newWebhooks,
               events: ['push', 'workflow_run'],
             });
             actionRef.current?.reloadAndRest?.();
@@ -304,6 +367,7 @@ const TableList: React.FC = () => {
         }}
         columns={columns}
         rowSelection={{
+          columnTitle: ' ', // 关闭全选
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
@@ -319,39 +383,44 @@ const TableList: React.FC = () => {
         <FooterToolbar
           extra={
             <div>
-              sss
               <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
               <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
               <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
               &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
+              {/*<span>*/}
+              {/*  <FormattedMessage*/}
+              {/*    id="pages.searchTable.totalServiceCalls"*/}
+              {/*    defaultMessage="Total number of service calls"*/}
+              {/*  />{' '}*/}
+              {/*  {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}*/}
+              {/*  <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />*/}
+              {/*</span>*/}
             </div>
           }
         >
+          {/*<Button*/}
+          {/*  onClick={async () => {*/}
+          {/*    await handleRemove(selectedRowsState);*/}
+          {/*    setSelectedRows([]);*/}
+          {/*    actionRef.current?.reloadAndRest?.();*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  <FormattedMessage*/}
+          {/*    id="pages.searchTable.batchDeletion"*/}
+          {/*    defaultMessage="Batch deletion"*/}
+          {/*  />*/}
+          {/*</Button>*/}
           <Button
+            type="primary"
             onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
+              await doBatchUpdate(selectedRowsState);
             }}
           >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          <Button type="primary">
-            <FormattedMessage
-              id="pages.searchTable.batchApproval"
-              defaultMessage="Batch approval"
-            />
+            批量修改
+            {/*<FormattedMessage*/}
+            {/*  id="pages.searchTable.batchApproval"*/}
+            {/*  defaultMessage="Batch approval"*/}
+            {/*/>*/}
           </Button>
         </FooterToolbar>
       )}
