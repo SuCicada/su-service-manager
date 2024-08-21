@@ -6,10 +6,10 @@ import proxy from './proxy';
 import routes from './routes';
 import dotenv from 'dotenv';
 
-const { REACT_APP_ENV = 'dev' } = process.env;
+const { NODE_ENV = 'development', REACT_APP_ENV = 'dev' } = process.env;
 
 const project_path = join(__dirname, '../');
-const envfile = `${project_path}/.env.${REACT_APP_ENV}`;
+const envfile = `${project_path}/.env.${NODE_ENV}`;
 console.log('envfile:', envfile);
 const env = dotenv.config({ path: envfile });
 console.log(env);

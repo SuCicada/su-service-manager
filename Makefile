@@ -1,0 +1,4 @@
+build:
+	pnpm build
+
+
