@@ -15,13 +15,12 @@ import {
   ProFormCheckbox,
   ProFormText,
 } from '@ant-design/pro-components';
-import { FormattedMessage, history, SelectLang, useIntl, useModel, Helmet } from '@umijs/max';
+import { history, useModel, Helmet } from '@umijs/max';
 import { Alert, message, Tabs } from 'antd';
 import Settings from '../../../../config/defaultSettings';
 import React, { useState } from 'react';
 import { flushSync } from 'react-dom';
 import { createStyles } from 'antd-style';
-
 const useStyles = createStyles(({ token }) => {
   return {
     action: {
@@ -57,10 +56,8 @@ const useStyles = createStyles(({ token }) => {
     },
   };
 });
-
 const ActionIcons = () => {
   const { styles } = useStyles();
-
   return (
     <>
       <AlipayCircleOutlined key="AlipayCircleOutlined" className={styles.action} />
@@ -69,17 +66,10 @@ const ActionIcons = () => {
     </>
   );
 };
-
 const Lang = () => {
   const { styles } = useStyles();
-
-  return (
-    <div className={styles.lang} data-lang>
-      {SelectLang && <SelectLang />}
-    </div>
-  );
+  return;
 };
-
 const LoginMessage: React.FC<{
   content: string;
 }> = ({ content }) => {
@@ -94,14 +84,11 @@ const LoginMessage: React.FC<{
     />
   );
 };
-
 const Login: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
   const [type, setType] = useState<string>('account');
   const { initialState, setInitialState } = useModel('@@initialState');
   const { styles } = useStyles();
-  const intl = useIntl();
-
   const fetchUserInfo = async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
     if (userInfo) {
@@ -113,7 +100,6 @@ const Login: React.FC = () => {
       });
     }
   };
-
   const handleSubmit = async (values: API.LoginParams) => {
     try {
       // 登录
@@ -124,10 +110,7 @@ const Login: React.FC = () => {
         currentAuthority: 'admin',
       };
       if (msg.status === 'ok') {
-        const defaultLoginSuccessMessage = intl.formatMessage({
-          id: 'pages.login.success',
-          defaultMessage: '登录成功！',
-        });
+        const defaultLoginSuccessMessage = '登录成功！';
         message.success(defaultLoginSuccessMessage);
         await fetchUserInfo();
         const urlParams = new URL(window.location.href).searchParams;
@@ -138,25 +121,17 @@ const Login: React.FC = () => {
       // 如果失败去设置用户错误信息
       setUserLoginState(msg);
     } catch (error) {
-      const defaultLoginFailureMessage = intl.formatMessage({
-        id: 'pages.login.failure',
-        defaultMessage: '登录失败，请重试！',
-      });
+      const defaultLoginFailureMessage = '登录失败，请重试！';
       console.log(error);
       message.error(defaultLoginFailureMessage);
     }
   };
   const { status, type: loginType } = userLoginState;
-
   return (
     <div className={styles.container}>
       <Helmet>
         <title>
-          {intl.formatMessage({
-            id: 'menu.login',
-            defaultMessage: '登录页',
-          })}
-          - {Settings.title}
+          {'登录'}- {Settings.title}
         </title>
       </Helmet>
       <Lang />
@@ -173,7 +148,7 @@ const Login: React.FC = () => {
           }}
           logo={<img alt="logo" src="/logo.svg" />}
           title="Ant Design"
-          subTitle={intl.formatMessage({ id: 'pages.layouts.userLayout.title' })}
+          subTitle={'Ant Design 是西湖区最具影响力的 Web 设计规范'}
           initialValues={{
             autoLogin: true,
           }}
@@ -196,10 +171,7 @@ const Login: React.FC = () => {
             items={[
               {
                 key: 'account',
-                label: intl.formatMessage({
-                  id: 'pages.login.accountLogin.tab',
-                  defaultMessage: '账户密码登录3',
-                }),
+                label: '账户密码登录',
               },
               // {
               //   key: 'mobile',
@@ -212,12 +184,7 @@ const Login: React.FC = () => {
           />
 
           {status === 'error' && loginType === 'account' && (
-            <LoginMessage
-              content={intl.formatMessage({
-                id: 'pages.login.accountLogin.errorMessage',
-                defaultMessage: '账户或密码错误(admin/ant.design)',
-              })}
-            />
+            <LoginMessage content={'错误的用户名和密码(admin/ant.design)'} />
           )}
           {type === 'account' && (
             <>
@@ -227,19 +194,11 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <UserOutlined />,
                 }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.username.placeholder',
-                  defaultMessage: '用户名: admin or user',
-                })}
+                placeholder={'用户名: admin or user'}
                 rules={[
                   {
                     required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.username.required"
-                        defaultMessage="请输入用户名!"
-                      />
-                    ),
+                    message: '用户名是必填项！',
                   },
                 ]}
               />
@@ -249,19 +208,11 @@ const Login: React.FC = () => {
                   size: 'large',
                   prefix: <LockOutlined />,
                 }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.password.placeholder',
-                  defaultMessage: '密码: ant.design',
-                })}
+                placeholder={'密码: ant.design'}
                 rules={[
                   {
                     required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.password.required"
-                        defaultMessage="请输入密码！"
-                      />
-                    ),
+                    message: '密码是必填项！',
                   },
                 ]}
               />
@@ -275,14 +226,14 @@ const Login: React.FC = () => {
             }}
           >
             <ProFormCheckbox noStyle name="autoLogin">
-              <FormattedMessage id="pages.login.rememberMe" defaultMessage="自动登录" />
+              自动登录
             </ProFormCheckbox>
             <a
               style={{
                 float: 'right',
               }}
             >
-              <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码" />
+              忘记密码 ?
             </a>
           </div>
         </LoginForm>
@@ -291,5 +242,4 @@ const Login: React.FC = () => {
     </div>
   );
 };
-
 export default Login;

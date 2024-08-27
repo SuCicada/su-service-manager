@@ -1,4 +1,4 @@
-import { Footer, Question, SelectLang, AvatarDropdown, AvatarName } from '@/components';
+import { Footer, Question, AvatarDropdown, AvatarName } from '@/components';
 import { LinkOutlined } from '@ant-design/icons';
 import type { Settings as LayoutSettings } from '@ant-design/pro-components';
 import { SettingDrawer } from '@ant-design/pro-components';
@@ -50,7 +50,7 @@ export async function getInitialState(): Promise<{
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
   return {
-    actionsRender: () => [<Question key="doc" />, <SelectLang key="SelectLang" />],
+    actionsRender: () => [<Question key="doc" />],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
       title: <AvatarName />,
@@ -97,7 +97,15 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
           </Link>,
         ]
       : [],
-    menuHeaderRender: undefined,
+    // menuHeaderRender: (logo,title)=>{
+    //   return (
+    //     <Link to="/">
+    //       {logo}
+    //       {title}
+    //     </Link>
+    //   )
+    // },
+    // iconfontUrl: '//at.alicdn.com/t/c/font_4661614_c2yyg6wsz9a.js',
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
     // 增加一个 loading 的状态

@@ -12,7 +12,7 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, request, useIntl } from '@umijs/max';
+import { request } from '@umijs/max';
 import { Button, Drawer, Input, Popconfirm, message } from 'antd';
 import React, { useRef, useState } from 'react';
 import type { FormValueType } from './components/UpdateForm';
@@ -29,7 +29,9 @@ import { syncFromGithubWebhooks } from '@/pages/github/webhooks/service';
 const handleAdd = async (fields: API.RuleListItem) => {
   const hide = message.loading('正在添加');
   try {
-    await addRule({ ...fields });
+    await addRule({
+      ...fields,
+    });
     hide();
     message.success('Added successfully');
     return true;
@@ -55,7 +57,6 @@ const handleUpdate = async (fields: FormValueType) => {
       key: fields.key,
     });
     hide();
-
     message.success('Configuration is successful');
     return true;
   } catch (error) {
@@ -92,7 +93,6 @@ const handleRemove = async (selectedRows: Webhook[]) => {
     return false;
   }
 };
-
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -104,9 +104,7 @@ const TableList: React.FC = () => {
    * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
-
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
   const actionRef = useRef<ActionType>();
   // const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
   const [selectedRowsState, setSelectedRows] = useState<Webhook[]>([]);
@@ -116,7 +114,6 @@ const TableList: React.FC = () => {
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
-  const intl = useIntl();
 
   const columns: ProColumns<Webhook>[] = [
     {
@@ -185,15 +182,11 @@ const TableList: React.FC = () => {
       setLoading(false);
     }
   };
-
   return (
     <PageContainer>
       <EditableProTable<Webhook, API.PageParams>
         loading={loading}
-        headerTitle={intl.formatMessage({
-          id: 'pages.searchTable.title',
-          defaultMessage: 'Enquiry form',
-        })}
+        headerTitle={'查询表格'}
         actionRef={actionRef}
         search={false}
         rowKey="id"
@@ -210,7 +203,10 @@ const TableList: React.FC = () => {
           onSave: async (key, row) => {
             console.log('onSave', key, row);
             // await waitTime(2000);
-            await updateWebhook({ id: key, ...row } as Webhook);
+            await updateWebhook({
+              id: key,
+              ...row,
+            } as Webhook);
             actionRef.current?.reloadAndRest?.();
           },
           onChange: (editableKeys, editableRows) => {
@@ -263,18 +259,18 @@ const TableList: React.FC = () => {
         <FooterToolbar
           extra={
             <div>
-              sss
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
+              sss 已选择{' '}
+              <a
+                style={{
+                  fontWeight: 600,
+                }}
+              >
+                {selectedRowsState.length}
+              </a>{' '}
+              项 &nbsp;&nbsp;
               <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {/*{selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}*/}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
+                服务调用次数总计{' '}
+                {/*{selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}*/}万
               </span>
             </div>
           }
@@ -286,21 +282,12 @@ const TableList: React.FC = () => {
               actionRef.current?.reloadAndRest?.();
             }}
           >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
+            批量删除
           </Button>
-          <Button type="primary">
-            <FormattedMessage
-              id="pages.searchTable.batchApproval"
-              defaultMessage="Batch approval"
-            />
-          </Button>
+          <Button type="primary">批量审批</Button>
         </FooterToolbar>
       )}
     </PageContainer>
   );
 };
-
 export default TableList;

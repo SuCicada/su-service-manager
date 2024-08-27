@@ -10,7 +10,7 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl } from '@umijs/max';
+import '@umijs/max';
 import { Button, Drawer, Input, message } from 'antd';
 import React, { useRef, useState } from 'react';
 import type { FormValueType } from './components/UpdateForm';
@@ -24,7 +24,9 @@ import UpdateForm from './components/UpdateForm';
 const handleAdd = async (fields: API.RuleListItem) => {
   const hide = message.loading('正在添加');
   try {
-    await addRule({ ...fields });
+    await addRule({
+      ...fields,
+    });
     hide();
     message.success('Added successfully');
     return true;
@@ -50,7 +52,6 @@ const handleUpdate = async (fields: FormValueType) => {
       key: fields.key,
     });
     hide();
-
     message.success('Configuration is successful');
     return true;
   } catch (error) {
@@ -82,7 +83,6 @@ const handleRemove = async (selectedRows: API.RuleListItem[]) => {
     return false;
   }
 };
-
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -94,9 +94,7 @@ const TableList: React.FC = () => {
    * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
-
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
   const [selectedRowsState, setSelectedRows] = useState<API.RuleListItem[]>([]);
@@ -105,16 +103,10 @@ const TableList: React.FC = () => {
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
-  const intl = useIntl();
 
   const columns: ProColumns<API.RuleListItem>[] = [
     {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.updateForm.ruleName.nameLabel"
-          defaultMessage="Rule name"
-        />
-      ),
+      title: '规则名称',
       dataIndex: 'name',
       // tip: 'The rule name is the unique key',
       render: (dom, entity) => {
@@ -131,7 +123,7 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.searchTable.titleDesc" defaultMessage="Description" />,
+      title: '描述',
       dataIndex: 'desc',
       valueType: 'textarea',
     },
@@ -218,7 +210,7 @@ const TableList: React.FC = () => {
     //   },
     // },
     {
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
+      title: '操作',
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => [
@@ -229,25 +221,18 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
           }}
         >
-          <FormattedMessage id="pages.searchTable.config" defaultMessage="Configuration" />
+          配置
         </a>,
         <a key="subscribeAlert" href="https://procomponents.ant.design/">
-          <FormattedMessage
-            id="pages.searchTable.subscribeAlert"
-            defaultMessage="Subscribe to alerts"
-          />
+          订阅警报
         </a>,
       ],
     },
   ];
-
   return (
     <PageContainer>
       <ProTable<API.RuleListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.searchTable.title',
-          defaultMessage: 'Enquiry form',
-        })}
+        headerTitle={'查询表格'}
         // actionRef={actionRef}
         rowKey="key"
         search={{
@@ -261,7 +246,7 @@ const TableList: React.FC = () => {
               handleModalOpen(true);
             }}
           >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+            <PlusOutlined /> 新建
           </Button>,
         ]}
         request={rule}
@@ -276,17 +261,17 @@ const TableList: React.FC = () => {
         <FooterToolbar
           extra={
             <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
+              已选择{' '}
+              <a
+                style={{
+                  fontWeight: 600,
+                }}
+              >
+                {selectedRowsState.length}
+              </a>{' '}
+              项 &nbsp;&nbsp;
               <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
+                服务调用次数总计 {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)} 万
               </span>
             </div>
           }
@@ -298,24 +283,13 @@ const TableList: React.FC = () => {
               actionRef.current?.reloadAndRest?.();
             }}
           >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
+            批量删除
           </Button>
-          <Button type="primary">
-            <FormattedMessage
-              id="pages.searchTable.batchApproval"
-              defaultMessage="Batch approval"
-            />
-          </Button>
+          <Button type="primary">批量审批</Button>
         </FooterToolbar>
       )}
       <ModalForm
-        title={intl.formatMessage({
-          id: 'pages.searchTable.createForm.newRule',
-          defaultMessage: 'New rule',
-        })}
+        title={'新建规则'}
         width="400px"
         open={createModalOpen}
         onOpenChange={handleModalOpen}
@@ -333,12 +307,7 @@ const TableList: React.FC = () => {
           rules={[
             {
               required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.searchTable.ruleName"
-                  defaultMessage="Rule name is required"
-                />
-              ),
+              message: '规则名称为必填项',
             },
           ]}
           width="md"
@@ -393,5 +362,4 @@ const TableList: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default TableList;

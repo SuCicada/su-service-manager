@@ -12,7 +12,7 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, request, useIntl } from '@umijs/max';
+import { request } from '@umijs/max';
 import { Button, Drawer, Input, Popconfirm, message, Select } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import type { FormValueType } from './components/UpdateForm';
@@ -28,7 +28,9 @@ import { getWebhooks, updateWebhook, Webhook } from '@/pages/github/webhooks/api
 const handleAdd = async (fields: API.RuleListItem) => {
   const hide = message.loading('正在添加');
   try {
-    await addRule({ ...fields });
+    await addRule({
+      ...fields,
+    });
     hide();
     message.success('Added successfully');
     return true;
@@ -54,7 +56,6 @@ const handleUpdate = async (fields: FormValueType) => {
       key: fields.key,
     });
     hide();
-
     message.success('Configuration is successful');
     return true;
   } catch (error) {
@@ -86,7 +87,6 @@ const handleRemove = async (selectedRows: API.RuleListItem[]) => {
     return false;
   }
 };
-
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -98,9 +98,7 @@ const TableList: React.FC = () => {
    * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
-
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
   const [selectedRowsState, setSelectedRows] = useState<GitHubRepoType[]>([]);
@@ -109,7 +107,6 @@ const TableList: React.FC = () => {
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
-  const intl = useIntl();
 
   useEffect(() => {
     getWebhooks().then((res) => {
@@ -132,7 +129,7 @@ const TableList: React.FC = () => {
           <>
             {dom}
             <a target="_blank" rel="noopener noreferrer" href={entity.html_url}>
-              <FormattedMessage id="pages.searchTable.view" defaultMessage="View" />
+              View
             </a>
           </>
           // target="_blank" rel="noopener noreferrer"
@@ -224,7 +221,6 @@ const TableList: React.FC = () => {
       ],
     },
   ];
-
   const [batchUpdatedWebhooks, setBatchUpdatedWebhooks] = useState<string[]>([]);
   const doBatchUpdate = async (updateRows: GitHubRepoType[]) => {
     const hide = message.loading('updating');
@@ -242,14 +238,10 @@ const TableList: React.FC = () => {
     hide();
     actionRef.current?.reloadAndRest?.();
   };
-
   return (
     <PageContainer>
       <EditableProTable<GitHubRepoType, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.searchTable.title',
-          defaultMessage: 'Enquiry form',
-        })}
+        headerTitle={'查询表格'}
         actionRef={actionRef}
         search={false}
         rowKey="repo"
@@ -260,7 +252,9 @@ const TableList: React.FC = () => {
                   key="select"
                   mode="multiple"
                   allowClear
-                  style={{ width: 400 }}
+                  style={{
+                    width: 400,
+                  }}
                   placeholder="Select an option"
                   options={webhooks.map((webhook) => ({
                     label: webhook.name,
@@ -275,7 +269,6 @@ const TableList: React.FC = () => {
                     setBatchUpdatedWebhooks(value);
                   }}
                 ></Select>,
-
                 <Button
                   type="primary"
                   key="primary"
@@ -309,7 +302,6 @@ const TableList: React.FC = () => {
               }
               return webhook;
             });
-
             await updateRepoWebhook({
               owner: row.owner,
               repo: row.repo,
@@ -350,10 +342,15 @@ const TableList: React.FC = () => {
           const webhooks = await getWebhooks();
           console.log('count', count);
           console.log('webhooks', webhooks);
-          const webhooksMap = webhooks.reduce((acc, cur) => {
-            acc[cur.url] = cur.name;
-            return acc;
-          }, {} as { [key: string]: string });
+          const webhooksMap = webhooks.reduce(
+            (acc, cur) => {
+              acc[cur.url] = cur.name;
+              return acc;
+            },
+            {} as {
+              [key: string]: string;
+            },
+          );
           repos.forEach((item) => {
             item.webhooks_name = item.webhooks.map((webhook) => webhooksMap[webhook]);
             // console.log(item)
@@ -367,7 +364,8 @@ const TableList: React.FC = () => {
         }}
         columns={columns}
         rowSelection={{
-          columnTitle: ' ', // 关闭全选
+          columnTitle: ' ',
+          // 关闭全选
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
@@ -383,10 +381,15 @@ const TableList: React.FC = () => {
         <FooterToolbar
           extra={
             <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
+              已选择{' '}
+              <a
+                style={{
+                  fontWeight: 600,
+                }}
+              >
+                {selectedRowsState.length}
+              </a>{' '}
+              项 &nbsp;&nbsp;
               {/*<span>*/}
               {/*  <FormattedMessage*/}
               {/*    id="pages.searchTable.totalServiceCalls"*/}
@@ -427,5 +430,4 @@ const TableList: React.FC = () => {
     </PageContainer>
   );
 };
-
 export default TableList;
