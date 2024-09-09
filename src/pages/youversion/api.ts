@@ -1,10 +1,15 @@
 import { request } from '@@/exports';
 import { eachDayOfInterval, format } from 'date-fns';
-import { DailyPray, DailyPrayData, DailyPrayEditData, PrayText } from './struct';
+import { DailyPray, DailyPrayData, DailyPrayEditData, FuriganaResponse, PrayText } from './struct';
 
 const serviceApi = {
-  url: `${process.env.BIBLE_YOUVERSION_SERVICE_BASE}`,
-  headers: {},
+  youversion: {
+    url: `${process.env.BIBLE_YOUVERSION_SERVICE_BASE}`,
+    headers: {},
+  },
+  furigana: {
+    url: `${process.env.JAPANESE_FURIGANA_SERVICE_BASE}`,
+  },
 };
 
 function getDateFromFilename(filename: string) {
@@ -16,7 +21,7 @@ function getFilenameFromDate(date: string) {
 }
 
 export async function getList() {
-  let res = await request<{ data: string[] }>(`${serviceApi.url}/list`, {
+  let res = await request<{ data: string[] }>(`${serviceApi.youversion.url}/list`, {
     method: 'GET',
   });
 
@@ -57,36 +62,46 @@ export async function getList() {
 }
 
 export async function getOne(date: string) {
-  let res = await request<DailyPrayData>(`${serviceApi.url}/get/${date}`, {
+  let res = await request<DailyPrayData>(`${serviceApi.youversion.url}/get/${date}`, {
     method: 'GET',
   });
-  const editDatas: DailyPrayEditData[] = [
-    { title: 'bibleWords', origin: res.bible.bibleWords },
-    { title: 'bibleDescription', origin: res.bible.bibleDescription },
+  let record = await getRecord(date);
+
+  const editDatas = [
+    { id: 'bibleWords', origin: res.bible.bibleWords },
+    { id: 'bibleDescription', origin: res.bible.bibleDescription },
     {
-      title: 'bibleQuestion',
-      origin: res.bible.bibleQuestion,
-      // defaultText: `${res.bible.bibleQuestion.question}\n${res.bible.bibleQuestion.answer.join("\n")}`,
+      id: 'bibleQuestion',
+      // origin: res.bible.bibleQuestion,
+      origin: `${res.bible.bibleQuestion.question}\n${res.bible.bibleQuestion.answer.join('\n')}`,
     },
-    { title: 'biblePray', origin: res.bible.biblePray },
+    { id: 'biblePray', origin: res.bible.biblePray },
 
-    { title: 'prayPreface', origin: res.pray.prayPreface },
-    { title: 'prayPraiseGod', origin: res.pray.prayPraiseGod },
-    { title: 'prayThinking', origin: res.pray.prayThinking },
-    { title: 'prayWords', origin: res.pray.prayWords },
-    { title: 'prayEnd', origin: res.pray.prayEnd },
+    { id: 'prayPreface', origin: res.pray.prayPreface },
+    { id: 'prayPraiseGod', origin: res.pray.prayPraiseGod },
+    { id: 'prayThinking', origin: res.pray.prayThinking },
+    { id: 'prayWords', origin: res.pray.prayWords },
+    { id: 'prayEnd', origin: res.pray.prayEnd },
   ];
-
+  console.log('editDatas:', editDatas);
+  // const editDatasRes = editDatas.map((editData) => {
   const editDatasRes: DailyPrayEditData[] = editDatas.map((editData) => {
+    let origin = collectPrayText(editData.origin);
+    origin = origin.replace(/(\n\s*){3,}/g, '\n\n');
+    origin = origin.replace(/\u202D/g, '\n[');
+    origin = origin.replace(/\u202C/g, ']');
+    // origin = origin.replace(/&ldquo;/g, '「');
+    // origin = origin.replace(/&rdquo;/g, '」');
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(origin, 'text/html');
+    origin = doc.documentElement.textContent ?? '';
+    // [\u202C-\u202E]
+
     return {
       ...editData,
-      origin: JSON.stringify(
-        {
-          [editData.title]: editData.origin,
-        },
-        null,
-        2,
-      ) as string,
+      title: editData.id,
+      origin: origin,
+      furigana: record[editData.id] ?? '',
     };
   });
   return {
@@ -95,32 +110,63 @@ export async function getOne(date: string) {
   };
 }
 
-function collectPrayText(data: string | PrayText): string {
+function collectPrayText(data: undefined | string | PrayText | any): string {
+  console.log('data:', data);
+  if (!data) {
+    return '';
+  }
   if (typeof data === 'string') {
     return data;
   }
-  return `${data.description}`;
+  return data.description ?? '';
 }
 
-// export async function createWebhook(data: Webhook) {
-//   return request<any>(webhooksServiceApi.url, {
-//     method: 'POST',
-//     headers: webhooksServiceApi.headers,
-//     data: data,
-//   });
-// }
-//
-// export async function updateWebhook(data: Webhook) {
-//   return request<any>(`${webhooksServiceApi.url}/${data.id}`, {
-//     method: 'PUT',
-//     headers: webhooksServiceApi.headers,
-//     data: data,
-//   });
-// }
-//
-// export async function deleteWebhook(id: number) {
-//   return request<any>(`${webhooksServiceApi.url}/${id}`, {
-//     method: 'DELETE',
-//     headers: webhooksServiceApi.headers,
-//   });
-// }
+export async function getFuriganaTemplate(text: string) {
+  let res = await request<FuriganaResponse>(`${serviceApi.furigana.url}/convert`, {
+    method: 'POST',
+    data: {
+      text: text,
+    },
+  });
+  let data = res.data;
+
+  let kanjiFuStr = '';
+  data.forEach((item) => {
+    const [character, type, hiragana, katakana] = item;
+    switch (type) {
+      case 1:
+        kanjiFuStr += `{{${character}|${hiragana}|}}`;
+        break;
+
+      case 2:
+      default:
+        kanjiFuStr += character;
+    }
+  });
+  return kanjiFuStr;
+}
+
+export async function saveToDB(date: string, data: DailyPrayEditData) {
+  let res = await request(`${serviceApi.youversion.url}/record/save/${date}`, {
+    method: 'POST',
+    data: {
+      title: data.title,
+      furigana: data.furigana,
+    },
+  });
+  return res;
+}
+
+export async function getRecord(date: string, title?: string) {
+  let query = '';
+  if (title) {
+    query = `title=${title}`;
+  }
+  let res = await request<string | any>(
+    `${serviceApi.youversion.url}/record/get/${date}?${query}`,
+    {
+      method: 'GET',
+    },
+  );
+  return res.data ?? '';
+}

@@ -17,10 +17,11 @@ import { Button, Drawer, Input, Popconfirm, message } from 'antd';
 import React, { useEffect, useRef, useState } from 'react';
 import { deleteWebhook, getWebhooks, updateWebhook, Webhook } from '@/pages/github/webhooks/api';
 import { syncFromGithubWebhooks } from '@/pages/github/webhooks/service';
-import { DailyPray, getList } from '@/pages/youversion/api';
+import { getList } from '@/pages/youversion/api';
 
 // @ts-ignore
 import { history } from 'umi';
+import { DailyPray } from '@/pages/youversion/struct';
 
 const TableList: React.FC = () => {
   /**
@@ -129,21 +130,6 @@ const TableList: React.FC = () => {
     },
   ];
 
-  const clickSyncFromGithubWebhooks = async () => {
-    setLoading(true);
-    try {
-      // console.log('sleep start');
-      await syncFromGithubWebhooks();
-      // const sleep = util.promisify(setTimeout);
-      // await new Promise(resolve => {
-      //   setTimeout(resolve, 1000)
-      // });
-      // console.log('sleep over');
-      actionRef.current?.reloadAndRest?.();
-    } finally {
-      setLoading(false);
-    }
-  };
   return (
     <>
       <PageContainer>

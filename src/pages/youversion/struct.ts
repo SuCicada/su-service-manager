@@ -39,7 +39,19 @@ export interface PrayText {
 
 // edit
 export interface DailyPrayEditData {
+  readonly id: string;
   readonly title: string;
-  readonly origin: string | any;
+  readonly origin?: string | any;
   furigana?: string;
+}
+
+export interface FuriganaResponse {
+  data: Array<
+    [
+      character: string,
+      type: 0 | 1 | 2 | 3, // 1:hasKJ && hasHK(priority) 0:hasKJ 2:hasHK 3:other
+      hiragana: string, // ひらがな
+      katakana: string, // カタカナ
+    ]
+  >;
 }
