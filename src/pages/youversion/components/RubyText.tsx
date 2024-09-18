@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { UpdateFormProps } from '@/pages/youversion/components/ShowForm';
 import parse from 'html-react-parser';
+import { parseFromFuriganaTemplate } from '@/pages/youversion/edit/service';
 
 function convertToHtml(str: string): React.ReactNode {
   const htmlStrArr = str.split('').map((item, index) => {
@@ -39,42 +40,47 @@ const RubyText: React.FC<{ templateText: string }> = (props) => {
   const [wordData, setWordData] = React.useState<any[]>([]);
   useEffect(() => {
     console.log('templateText', templateText);
-    if (!templateText) return;
-
-    const regex = /{{(.*?)\|(.*?)\|(.*?)}}/g;
-    let match;
-    let data: any[] = [];
-    let index = 0;
-    while ((match = regex.exec(templateText))) {
-      const raw = templateText.slice(index, match.index);
-      const [matchStr, kanji, showHire, readVoice] = match;
-      index = regex.lastIndex;
-      data.push(raw);
-      data.push({ kanji, showHire, readVoice });
-    }
-    data.push(templateText.slice(index));
+    // if (!templateText) return;
+    const data = parseFromFuriganaTemplate(templateText);
     setWordData(data);
     console.log('data:', data);
   }, [templateText]);
 
   return (
-    <>
+    <span>
       {wordData.map((item, index) => {
         if (typeof item === 'string') {
-          return <span key={index}>{convertToHtml(item)}</span>;
+          return (
+            <span
+              key={index}
+              // style={{ margin: '0 2px'}}
+            >
+              {convertToHtml(item)}
+            </span>
+          );
         } else {
           const { kanji, showHire, readVoice } = item;
           return (
-            <ruby key={index} style={{}}>
-              {kanji}
-              <rp style={{ color: 'gray', fontSize: '0.8em', margin: '0 2px' }}>(</rp>
-              <rt style={{ fontSize: '0.8em', color: 'red', margin: '0 2px' }}>{showHire}</rt>
-              <rp style={{ color: 'gray', fontSize: '0.8em', margin: '0 2px' }}>)</rp>
-            </ruby>
+            <span key={index} style={{ margin: '0 2px' }}>
+              <ruby>
+                {kanji}
+                <rp style={{}}>(</rp>
+                <rt
+                  style={{
+                    userSelect: 'none',
+                    color: 'red',
+                    fontSize: '0.8em',
+                  }}
+                >
+                  {showHire}
+                </rt>
+                <rp style={{}}>)</rp>
+              </ruby>
+            </span>
           );
         }
       })}
-    </>
+    </span>
   );
 };
 

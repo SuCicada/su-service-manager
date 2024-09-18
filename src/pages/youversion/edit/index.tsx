@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, Collapse, Divider, Input, message, Space, Switch } from 'antd';
+import { Button, Card, Collapse, Divider, Input, message, Select, Space, Switch } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useParams } from '@umijs/max';
 import { PageContainer } from '@ant-design/pro-components';
 import { format } from 'date-fns';
 
 import { Editor, Monaco } from '@monaco-editor/react';
-import { getFuriganaTemplate, getOne, getRecord, saveToDB } from '@/pages/youversion/api';
+import {
+  getAudioFromDB,
+  getFuriganaTemplate,
+  getOne,
+  getRecord,
+  saveAudioToDB,
+  saveToDB,
+} from '@/pages/youversion/api';
 import { DailyPrayEditData } from '@/pages/youversion/struct';
 import RubyText from '@/pages/youversion/components/RubyText';
+import TTSAudio from '@/pages/youversion/edit/TTSAudio';
+import { getVoiceRead } from '@/pages/youversion/edit/service';
 
 const { TextArea } = Input;
 
@@ -93,7 +102,7 @@ const LargeEditorList = ({ params }: { params: { id: string } }) => {
       },
     }));
   };
-
+  const [audioBase64, setAudioBase64] = useState<string>('');
   return (
     <PageContainer>
       <Card>
@@ -223,6 +232,42 @@ const LargeEditorList = ({ params }: { params: { id: string } }) => {
                 ) : (
                   'なし'
                 )}
+
+                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 0' }}>
+                  <Button
+                    style={{ marginRight: '10px' }}
+                    onClick={async () => {
+                      const audio = await getAudioFromDB(date, prayData.title);
+                      if (audio) {
+                        setAudioBase64(audio);
+                        message.success('Get Audio Success');
+                      } else {
+                        message.error('Get Audio Failed');
+                      }
+                    }}
+                  >
+                    DB
+                  </Button>
+                  <TTSAudio
+                    text={getVoiceRead(itemStates[prayData.id]?.furigana)}
+                    audioBase64={audioBase64}
+                    setAudioBase64={setAudioBase64}
+                  />
+                  <Button
+                    type="primary"
+                    style={{ marginLeft: '10px' }}
+                    onClick={async () => {
+                      const { status } = await saveAudioToDB(date, prayData.title, audioBase64);
+                      if (status === 'ok') {
+                        message.success('Save Audio Success');
+                      } else {
+                        message.error('Save Audio Failed');
+                      }
+                    }}
+                  >
+                    Save Audio
+                  </Button>
+                </div>
               </div>
             ),
           }))}

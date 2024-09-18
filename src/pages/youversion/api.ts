@@ -170,3 +170,26 @@ export async function getRecord(date: string, title?: string) {
   );
   return res.data ?? '';
 }
+
+export async function saveAudioToDB(date: string, title: string, audio: string) {
+  console.log('saveAudioToDB:', date, title, 'length', audio.length);
+  let res = await request(`${serviceApi.youversion.url}/record/audio`, {
+    method: 'POST',
+    data: {
+      date: date,
+      title: title,
+      audio: audio,
+    },
+  });
+  return res;
+}
+
+export async function getAudioFromDB(date: string, title: string) {
+  let res = await request<string | any>(
+    `${serviceApi.youversion.url}/record/audio?date=${date}&title=${title}`,
+    {
+      method: 'GET',
+    },
+  );
+  return res.data ?? '';
+}

@@ -40,11 +40,13 @@ const TableList: React.FC = () => {
   const [selectedRowsState, setSelectedRows] = useState<Webhook[]>([]);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<DailyPray[]>([]);
+
+  const initData = async () => {
+    const _data = await getList();
+    setData(_data);
+  };
   useEffect(() => {
-    (async () => {
-      const _data = await getList();
-      setData(_data);
-    })();
+    initData();
   }, []);
   /**
    * @en-US International configuration
@@ -160,12 +162,14 @@ const TableList: React.FC = () => {
           toolBarRender={() => [
             // <>
             //   </>,
-            // <Button key="syncFromGithubWebhooks" onClick={clickSyncFromGithubWebhooks}>
-            //   Sync From Github
+            // <Button key="syncFromGithubWebhooks" >
+            //    Sync From Github
             // </Button>,
           ]}
           options={{
-            reload: true,
+            reload: async () => {
+              await initData();
+            },
           }}
           // request={async (params, sort, filter) => {
           //   let data = await getList();
@@ -202,7 +206,7 @@ const TableList: React.FC = () => {
                   }}
                 >
                   {selectedRowsState.length}
-                </a>{' '}
+                </a>
                 项 &nbsp;&nbsp;
                 <span>
                   服务调用次数总计{' '}
