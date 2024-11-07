@@ -1,0 +1,30 @@
+version: 2.1
+executors:
+  my-custom-executor:
+    resource_class: sucicada/test
+    machine: true
+commands:
+  setup:
+    steps:
+      - run:
+          name: setup
+          command: bash /home/circleci/prepare_job.sh
+
+jobs:
+  deploy:
+    executor: my-custom-executor
+#    resource_class: sucicada/test
+    # executor: my-custom-executor
+    # environment:
+      # BASH_ENV: /home/circleci/.bashrc
+    steps:
+      - checkout
+      - setup
+      - run: |
+          env-sync.rb download
+          sumake docker-run-remote
+
+workflows:
+  my-custom-workflow:
+    jobs:
+      - deploy
